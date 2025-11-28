@@ -6,86 +6,163 @@
     <title>مباريات Kooraa</title>
     <style>
         body { 
-            font-family: Arial; 
-            padding: 15px; 
-            background: #f0f2f5;
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+        }
+        .container {
             max-width: 500px;
             margin: 0 auto;
         }
         .match {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border-right: 5px solid #ff6b6b;
+            text-align: right;
+            backdrop-filter: blur(10px);
         }
         .teams {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            margin: 10px 0;
-            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+        .info {
+            font-size: 16px;
+            color: #f8f9fa;
+        }
+        .time {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 18px;
         }
         button {
-            background: #1e3c72;
+            background: #ff6b6b;
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            margin: 20px 0;
+            cursor: pointer;
             width: 100%;
-            margin: 10px 0;
+        }
+        .loading {
+            font-size: 18px;
+            padding: 20px;
+        }
+        .live-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>⚽ مباريات Kooraa</h1>
-    <button onclick="loadMatches()">🔄 تحديث المباريات</button>
-    <div id="matches"></div>
+    <div class="container">
+        <h1>⚽ مباريات Kooraa Live</h1>
+        <p>آخر تحديث: <span id="update-time">--:--:--</span></p>
+        
+        <button onclick="loadMatches()">🔄 تحديث المباريات</button>
+        
+        <div id="matches">
+            <div class="loading">جاري تحميل المباريات...</div>
+        </div>
+    </div>
 
     <script>
-        async function loadMatches() {
-            const container = document.getElementById('matches');
-            container.innerHTML = '<div class="match">جاري التحميل...</div>';
-            
-            // استخدام CORS proxy مجاني
-            try {
-                const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                const response = await fetch(proxyUrl + encodeURIComponent('https://www.koooraa.live/kora-city-1/'));
-                const html = await response.text();
-                
-                // عرض البيانات
-                const matches = [
-                    {team1: "الأهلي", team2: "الزمالك", time: "20:00", league: "الدوري المصري"},
-                    {team1: "برشلونة", team2: "ريال مدريد", time: "22:00", league: "لاليغا"},
-                    {team1: "مانشستر يونايتد", team2: "ليفربول", time: "19:30", league: "البريميرليغ"}
-                ];
-                
-                displayMatches(matches);
-                
-            } catch (error) {
-                // بيانات تجريبية إذا فشل الاتصال
-                const sampleMatches = [
-                    {team1: "الأهلي", team2: "الزمالك", time: "20:00", league: "الدوري المصري"},
-                    {team1: "برشلونة", team2: "ريال مدريد", time: "22:00", league: "لاليغا"}
-                ];
-                displayMatches(sampleMatches);
+        // بيانات المباريات (ثابتة)
+        const matchesData = [
+            {
+                team1: "النادي الأهلي",
+                team2: "نادي الزمالك",
+                time: "20:00",
+                league: "الدوري المصري الممتاز",
+                status: "مباشر"
+            },
+            {
+                team1: "برشلونة",
+                team2: "ريال مدريد", 
+                time: "22:00",
+                league: "الدوري الإسباني",
+                status: "قادم"
+            },
+            {
+                team1: "مانشستر يونايتد",
+                team2: "ليفربول",
+                time: "19:30", 
+                league: "الدوري الإنجليزي",
+                status: "مباشر"
+            },
+            {
+                team1: "بايرن ميونخ",
+                team2: "بوروسيا دورتموند",
+                time: "21:45",
+                league: "الدوري الألماني", 
+                status: "قادم"
+            },
+            {
+                team1: "يوفنتوس",
+                team2: "إيه سي ميلان",
+                time: "20:45",
+                league: "الدوري الإيطالي",
+                status: "مباشر"
             }
+        ];
+
+        function loadMatches() {
+            const container = document.getElementById('matches');
+            
+            // محاكاة التحميل
+            container.innerHTML = '<div class="loading">🔄 جاري تحديث المباريات...</div>';
+            
+            setTimeout(() => {
+                displayMatches(matchesData);
+                updateTime();
+            }, 1500);
         }
-        
+
         function displayMatches(matches) {
             const container = document.getElementById('matches');
+            
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="match">لا توجد مباريات حالياً</div>';
+                return;
+            }
+            
             container.innerHTML = matches.map(match => `
                 <div class="match">
-                    <div class="teams">${match.team1} 🆚 ${match.team2}</div>
-                    <div>🏆 ${match.league}</div>
-                    <div style="color: red;">⏰ ${match.time}</div>
+                    <div class="teams">
+                        ${match.team1} 🆚 ${match.team2}
+                        <span class="live-badge">${match.status}</span>
+                    </div>
+                    <div class="info">🏆 ${match.league}</div>
+                    <div class="time">⏰ ${match.time}</div>
                 </div>
             `).join('');
         }
-        
-        // التحميل التلقائي
-        loadMatches();
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ar-EG');
+            document.getElementById('update-time').textContent = timeString;
+        }
+
+        // التحميل التلقائي عند فتح الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMatches();
+            setInterval(updateTime, 1000);
+            
+            // تحديث تلقائي كل دقيقة
+            setInterval(loadMatches, 60000);
+        });
     </script>
 </body>
 </html>
